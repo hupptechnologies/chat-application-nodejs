@@ -19,7 +19,6 @@ class ChatMessageController {
     // Listen for sending a new chat message
     socket.on("send_message", async (data: SendMessageData) => {
       try {
-        console.log('data', data);
         const message = await ChatMessages.create({
           senderId: data.senderId,
           receiverId: data.receiverId,
