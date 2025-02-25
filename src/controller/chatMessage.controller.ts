@@ -109,7 +109,6 @@ class ChatMessageController {
               order: [["sentAt", "DESC"]]
             });
 
-						console.log('lastMessage', lastMessage);
             return {
               ...user.get({ plain: true }),
               lastMessage: lastMessage || null // ensures lastMessage is null if not found
