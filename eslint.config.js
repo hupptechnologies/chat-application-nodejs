@@ -34,14 +34,6 @@ module.exports = [
 					argsIgnorePattern: '^_',
 				},
 			],
-			'space-before-function-paren': [
-				'error',
-				{
-					anonymous: 'always',
-					named: 'always',
-					asyncArrow: 'always',
-				},
-			],
 			'keyword-spacing': ['error', { before: true, after: true }],
 			'arrow-spacing': ['error', { before: true, after: true }],
 			'no-trailing-spaces': ['error'],
