@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import routes from './routes';
 
@@ -8,6 +9,29 @@ const app = fastify({ logger: true });
 
 app.get('/', async () => {
 	return { message: 'Hello from Fastify!' };
+});
+
+const io = new Server(app.server, {
+	cors: {
+		origin: '*', // Adjust based on your frontend URL
+	},
+});
+
+io.on('connection', (socket) => {
+	app.log.info('A user connected:', socket.id);
+
+	// Listen for a "chat-message" event from clients.
+	socket.on('chat-message', (msg: string) => {
+		app.log.info(`Received message: ${msg} from ${socket.id}`);
+
+		// Broadcast the message to all connected clients.
+		io.emit('chat-message', msg);
+	});
+
+	// Listen for disconnections.
+	socket.on('disconnect', () => {
+		app.log.info('User disconnected:', socket.id);
+	});
 });
 
 app.register(routes);
