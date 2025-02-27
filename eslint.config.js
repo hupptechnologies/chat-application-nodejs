@@ -24,7 +24,7 @@ module.exports = [
 			'comma-spacing': ['error', { before: false, after: true }],
 			'no-var': ['error'],
 			'prefer-const': 'error',
-			'no-console': ['error'],
+			'no-console': ['error', { allow: ['warn', 'error'] }],
 			'no-unused-vars': [
 				'error',
 				{
