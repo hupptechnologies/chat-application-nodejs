@@ -102,7 +102,7 @@ class AuthController {
 				email: existingUser.dataValues.email,
 			});
 
-			// res.header('token', token);
+			res.header('token', token);
 
 			delete existingUser.dataValues.password;
 
@@ -110,7 +110,7 @@ class AuthController {
 				status: statusCodes.SUCCESS,
 				success: true,
 				message: message.LOGIN_SUCCESS,
-				data: { ...existingUser, token },
+				data: { ...existingUser.dataValues },
 			});
 		} catch (error: any) {
 			return Response.send(res, {

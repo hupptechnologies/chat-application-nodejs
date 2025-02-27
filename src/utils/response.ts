@@ -31,5 +31,5 @@ export const message = {
 	EMAIL_USED: 'Email already exist',
 	SIGNUP_INVALID: 'Invalid email, username or password',
 	MISSING_FIELD: 'Missing email or password field',
-	ADMIN_LIST_SUCCESS: 'Admin user list fetch successfully',
+	USER_LIST_SUCCESS: 'Users list fetch successfully',
 };
