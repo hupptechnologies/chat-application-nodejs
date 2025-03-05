@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import routes from './routes';
@@ -7,6 +8,11 @@ import ChatMessageController from './controller/chatMessage.controller';
 dotenv.config();
 
 const app = fastify({ logger: true });
+
+app.register(cors, {
+	origin: '*',
+	exposedHeaders: 'token',
+});
 
 app.get('/', async () => {
 	return { message: 'Hello from Fastify!' };

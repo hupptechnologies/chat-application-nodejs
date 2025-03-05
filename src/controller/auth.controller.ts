@@ -110,7 +110,7 @@ class AuthController {
 				status: statusCodes.SUCCESS,
 				success: true,
 				message: message.LOGIN_SUCCESS,
-				data: { ...existingUser.dataValues },
+				data: { user: { ...existingUser.dataValues }, token },
 			});
 		} catch (error: any) {
 			return Response.send(res, {

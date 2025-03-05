@@ -26,14 +26,15 @@ class ChatMessageController {
 					senderId: data.senderId,
 					receiverId: data.receiverId,
 					content: data.content,
-					status: MessageStatus.SENT, // e.g., 0 for sent
+					status: MessageStatus.SENT,
 					sentAt: new Date(),
 					deliveredAt: null,
 					readAt: null,
 				});
 
-				// Emit the message to the intended receiver.
-				this.io.emit(`receive_message_${data.receiverId}`, message);
+				// Emit the message to the sender and receiver
+				this.io.emit(`receive_message_${data.senderId}`, message); // Notify sender
+				this.io.emit(`receive_message_${data.receiverId}`, message); // Notify receiver
 			} catch (error) {
 				console.error('Error saving message:', error);
 			}
@@ -49,7 +50,8 @@ class ChatMessageController {
 						{ deliveredAt, status: MessageStatus.DELIVERED },
 						{ where: { id: data.messageId } },
 					);
-					// Optionally, fetch the updated message and emit an update event
+
+					// Fetch the updated message and notify the sender
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
@@ -74,7 +76,8 @@ class ChatMessageController {
 						{ readAt, status: MessageStatus.READ },
 						{ where: { id: data.messageId } },
 					);
-					// Optionally, fetch the updated message and notify the sender
+
+					// Fetch the updated message and notify the sender
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
@@ -108,7 +111,7 @@ class ChatMessageController {
 			try {
 				// 1. Get all users except the current user.
 				const users = await Users.findAll({
-					// where: { id: { [Op.ne]: data.userId } },
+					where: { id: { [Op.ne]: data.userId } },
 					attributes: { exclude: ['isDeleted', 'password'] },
 				});
 
@@ -118,7 +121,7 @@ class ChatMessageController {
 						const lastMessage = await ChatMessages.findOne({
 							where: {
 								[Op.or]: [
-									{ senderId: data.userId, receiverId: user.id },
+									// { senderId: data.userId, receiverId: user.id },
 									{ senderId: user.id, receiverId: data.userId },
 								],
 							},
@@ -139,6 +142,7 @@ class ChatMessageController {
 			}
 		});
 
+		// Handle disconnection
 		socket.on('disconnect', () => {
 			console.warn(`User disconnected: ${socket.id}`);
 		});
