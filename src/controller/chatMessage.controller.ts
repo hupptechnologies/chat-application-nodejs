@@ -33,7 +33,7 @@ class ChatMessageController {
 				});
 
 				// Emit the message to the sender and receiver
-				this.io.emit(`receive_message_${data.senderId}`, message); // Notify sender
+				// this.io.emit(`receive_message_${data.senderId}`, message); // Notify sender
 				this.io.emit(`receive_message_${data.receiverId}`, message); // Notify receiver
 			} catch (error) {
 				console.error('Error saving message:', error);
@@ -55,7 +55,14 @@ class ChatMessageController {
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
-					this.io.emit(`message_delivered_${data.receiverId}`, updatedMessage);
+
+					if (updatedMessage && updatedMessage.dataValues) {
+						// Notify the sender that the message has been delivered
+						this.io.emit(
+							`message_delivered_${updatedMessage.dataValues?.senderId}`,
+							updatedMessage.dataValues,
+						);
+					}
 				} catch (error) {
 					console.error('Error updating delivered message:', error);
 				}
@@ -81,7 +88,11 @@ class ChatMessageController {
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
-					this.io.emit(`message_read_${data.senderId}`, updatedMessage);
+
+					if (updatedMessage) {
+						// Notify the sender that the message has been read
+						this.io.emit(`message_read_${data.senderId}`, updatedMessage);
+					}
 				} catch (error) {
 					console.error('Error updating read message:', error);
 				}
@@ -121,7 +132,7 @@ class ChatMessageController {
 						const lastMessage = await ChatMessages.findOne({
 							where: {
 								[Op.or]: [
-									// { senderId: data.userId, receiverId: user.id },
+									{ senderId: data.userId, receiverId: user.id },
 									{ senderId: user.id, receiverId: data.userId },
 								],
 							},

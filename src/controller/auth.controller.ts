@@ -122,11 +122,27 @@ class AuthController {
 	}
 	async me(req: FastifyRequest, res: FastifyReply) {
 		try {
+			if (!req.user) {
+				return Response.send(res, {
+					status: statusCodes.UNAUTHORIZED,
+					success: false,
+					message: message.UNAUTHORIZED,
+				});
+			}
+			const user = await Users.findOne<UserInstance>({
+				where: {
+					id: req.user.id,
+					isDeleted: false,
+				},
+				attributes: {
+					exclude: ['isDeleted', 'password'],
+				},
+			});
 			Response.send(res, {
 				status: statusCodes.SUCCESS,
 				success: true,
 				message: message.LOGIN_SUCCESS,
-				data: req.user,
+				data: user?.dataValues,
 			});
 		} catch (error: any) {
 			return Response.send(res, {
