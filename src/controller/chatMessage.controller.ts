@@ -21,6 +21,10 @@ class ChatMessageController {
 	}
 
 	private handleConnection(socket: Socket) {
+		socket.on('user_connected', (userId: number) => {
+			this.onlineUsers.set(userId, socket.id); // Add user to online users map
+			this.io.emit('user_status_changed', { userId, status: 'online' }); // Notify all clients
+		});
 		// Listen for sending a new chat message
 		socket.on('send_message', async (data: SendMessageData) => {
 			try {
@@ -169,7 +173,13 @@ class ChatMessageController {
 		// Handle disconnection
 		socket.on('disconnect', () => {
 			// Find the user who disconnected
-			console.warn(`User disconnected: ${socket.id}`);
+			for (const [userId, socketId] of this.onlineUsers.entries()) {
+				if (socketId === socket.id) {
+					this.onlineUsers.delete(userId); // Remove user from online users map
+					this.io.emit('user_status_changed', { userId, status: 'offline' }); // Notify all clients
+					break;
+				}
+			}
 		});
 	}
 }
