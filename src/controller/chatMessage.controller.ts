@@ -12,9 +12,11 @@ const { ChatMessages, Users } = models;
 
 class ChatMessageController {
 	private io: Server;
+	private onlineUsers: Map<number, string>;
 
 	constructor(io: Server) {
 		this.io = io;
+		this.onlineUsers = new Map();
 		this.io.on('connection', this.handleConnection.bind(this));
 	}
 
@@ -33,7 +35,6 @@ class ChatMessageController {
 				});
 
 				// Emit the message to the sender and receiver
-				// this.io.emit(`receive_message_${data.senderId}`, message); // Notify sender
 				this.io.emit(`receive_message_${data.receiverId}`, message); // Notify receiver
 			} catch (error) {
 				console.error('Error saving message:', error);
@@ -126,7 +127,7 @@ class ChatMessageController {
 					attributes: { exclude: ['isDeleted', 'password'] },
 				});
 
-				// 2. For each user, fetch the last message exchanged with the current user.
+				// 2. For each user, fetch the last message exchanged with the current user and the unread message count.
 				const chatListWithLastMessage = await Promise.all(
 					users.map(async (user: any) => {
 						const lastMessage = await ChatMessages.findOne({
@@ -139,9 +140,21 @@ class ChatMessageController {
 							order: [['sentAt', 'DESC']],
 						});
 
+						// Fetch unread message count
+						const unreadCount = await ChatMessages.count({
+							where: {
+								senderId: user.id,
+								receiverId: data.userId,
+								[Op.or]: [
+									{ status: MessageStatus.SENT },
+									{ status: MessageStatus.DELIVERED },
+								],
+							},
+						});
 						return {
 							...user.get({ plain: true }),
 							lastMessage: lastMessage || null, // ensures lastMessage is null if not found
+							unreadCount, // add unread message count
 						};
 					}),
 				);
@@ -155,6 +168,7 @@ class ChatMessageController {
 
 		// Handle disconnection
 		socket.on('disconnect', () => {
+			// Find the user who disconnected
 			console.warn(`User disconnected: ${socket.id}`);
 		});
 	}
