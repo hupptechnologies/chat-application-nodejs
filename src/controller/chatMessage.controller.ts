@@ -25,6 +25,7 @@ class ChatMessageController {
 			this.onlineUsers.set(userId, socket.id); // Add user to online users map
 			this.io.emit('user_status_changed', { userId, status: 'online' }); // Notify all clients
 		});
+
 		// Listen for sending a new chat message
 		socket.on('send_message', async (data: SendMessageData) => {
 			try {
@@ -40,6 +41,7 @@ class ChatMessageController {
 
 				// Emit the message to the sender and receiver
 				this.io.emit(`receive_message_${data.receiverId}`, message); // Notify receiver
+				this.io.emit(`message_sent_${data.senderId}`, message); // Notify sender
 			} catch (error) {
 				console.error('Error saving message:', error);
 			}
@@ -163,7 +165,18 @@ class ChatMessageController {
 					}),
 				);
 
-				// 3. Emit the complete list to the client.
+				// 3. Sort the chat list based on the last message's sentAt timestamp.
+				chatListWithLastMessage.sort((a, b) => {
+					const aTime = a.lastMessage
+						? new Date(a.lastMessage.sentAt).getTime()
+						: 0;
+					const bTime = b.lastMessage
+						? new Date(b.lastMessage.sentAt).getTime()
+						: 0;
+					return bTime - aTime; // Sort in descending order of the sentAt timestamp
+				});
+
+				// 4. Emit the sorted list to the client.
 				socket.emit('users_chat_list', chatListWithLastMessage);
 			} catch (error) {
 				console.error('Error fetching users chat list:', error);
