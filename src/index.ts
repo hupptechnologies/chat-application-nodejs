@@ -33,7 +33,7 @@ const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Start the server using Fastify's listen method
 const start = async () => {
 	try {
-		app.listen({ port }, (err) => {
+		app.listen({ host: '0.0.0.0', port }, (err) => {
 			if (err) {
 				process.exit(1);
 			}
