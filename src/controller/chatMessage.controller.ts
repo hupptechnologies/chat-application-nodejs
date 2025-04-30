@@ -39,9 +39,21 @@ class ChatMessageController {
 					readAt: null,
 				});
 
-				// Emit the message to the sender and receiver
-				this.io.emit(`receive_message_${data.receiverId}`, message); // Notify receiver
-				this.io.emit(`message_sent_${data.senderId}`, message); // Notify sender
+				// Emit the message with the server-assigned ID to both users
+				const messageData = {
+					id: message.dataValues.id, // Use the server-assigned ID
+					senderId: message.dataValues.senderId,
+					receiverId: message.dataValues.receiverId,
+					content: message.dataValues.content,
+					status: message.dataValues.status,
+					sentAt: message.dataValues.sentAt,
+					deliveredAt: message.dataValues.deliveredAt,
+					readAt: message.dataValues.readAt,
+				};
+
+				// Notify both sender and receiver with the same message data
+				this.io.emit(`receive_message_${data.receiverId}`, messageData);
+				this.io.emit(`message_sent_${data.senderId}`, messageData);
 			} catch (error) {
 				console.error('Error saving message:', error);
 			}
@@ -58,15 +70,19 @@ class ChatMessageController {
 						{ where: { id: data.messageId } },
 					);
 
-					// Fetch the updated message and notify the sender
+					// Fetch the updated message
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
 
 					if (updatedMessage && updatedMessage.dataValues) {
-						// Notify the sender that the message has been delivered
+						// Notify both sender and receiver about the delivery status
 						this.io.emit(
-							`message_delivered_${updatedMessage.dataValues?.senderId}`,
+							`message_delivered_${updatedMessage.dataValues.senderId}`,
+							updatedMessage.dataValues,
+						);
+						this.io.emit(
+							`message_delivered_${updatedMessage.dataValues.receiverId}`,
 							updatedMessage.dataValues,
 						);
 					}
@@ -76,7 +92,7 @@ class ChatMessageController {
 			},
 		);
 
-		// Listen for marking a message as read
+		// In the message_read event handler
 		socket.on(
 			'message_read',
 			async (data: {
@@ -91,14 +107,15 @@ class ChatMessageController {
 						{ where: { id: data.messageId } },
 					);
 
-					// Fetch the updated message and notify the sender
+					// Fetch the updated message
 					const updatedMessage = await ChatMessages.findOne({
 						where: { id: data.messageId },
 					});
 
 					if (updatedMessage) {
-						// Notify the sender that the message has been read
+						// Notify both sender and receiver about the read status
 						this.io.emit(`message_read_${data.senderId}`, updatedMessage);
+						this.io.emit(`message_read_${data.receiverId}`, updatedMessage);
 					}
 				} catch (error) {
 					console.error('Error updating read message:', error);
